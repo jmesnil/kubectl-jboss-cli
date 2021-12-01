@@ -1,0 +1,29 @@
+#!/bin/bash
+
+help() {
+  script_name=jboss-cli
+echo "
+$script_name is a Kubernetes plugin to connect to all WildFly server belonging to an application and run jboss-cli sessions on all of them.
+Usage:
+  $script_name app <labels> <jboss-cli parameters>
+Where the parameters are:
+  * <labels> - Labels that match the application pods
+  * <jboss-cli parameters> - Parameters passed to the jboss-cli session (including --command, --commands, etc.)
+"
+exit 1
+}
+
+LABELS=$1
+
+if [ "x$LABELS" == "x" ]; then
+help
+fi
+
+shift
+
+PODS=$(kubectl get pods  -o name -l $LABELS)
+for pod in $PODS
+do
+  echo "Running on $pod"
+  kubectl exec -it ${pod} -- sh -c "[ -e /opt/jboss/container/wildfly-bootable-jar/install-dir ] && JBOSS_HOME=\$( cat /opt/jboss/container/wildfly-bootable-jar/install-dir ); \$JBOSS_HOME/bin/jboss-cli.sh -c $@"
+done

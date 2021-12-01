@@ -12,21 +12,25 @@ It can also connect to a server running inside a bootable jar.
 
 [source,shell]
 ----
-curl -O -L https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli
-chmod u+x ./kubectl-jboss_cli
+curl -O -L https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-pod
+chmod u+x ./kubectl-jboss_cli-pod
+curl -O -L https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-app
+chmod u+x ./kubectl-jboss_cli-app
 export PATH=$PATH:.
 ----
 
 == Usage
 
+=== Run commands on a single WildFly server
+
 [source,shell]
 ----
-kubectl jboss-cli <pod> <jboss-cli parameters>
+kubectl jboss-cli pod <pod name> <jboss-cli parameters>
 ----
 
-== Examples
+==== Examples
 
-=== Interactive session
+===== Interactive session
 
 [source,shell]
 ----
@@ -34,9 +38,10 @@ $ kubectl get pods
 NAME                         READY   STATUS    RESTARTS   AGE
 ...
 wildfly-s2i-d6f58b4b-vs4pt   1/1     Running   0          36m
+wildfly-s2i-d6f58b4b-njghw   1/1     Running   0          9m55s
 ...
 
-$ kubectl jboss-cli wildfly-s2i-d6f58b4b-vs4pt
+$ kubectl jboss-cli pod wildfly-s2i-d6f58b4b-vs4pt
 [standalone@localhost:9990 /] ls
 core-service                               subsystem                                  namespaces=[]                              release-version=17.0.3.Final
 deployment                                 system-property                            organization=undefined                     running-mode=NORMAL
@@ -53,13 +58,65 @@ socket-binding-group                       name=wildfly-s2i-d6f58b4b-vs4pt      
 }
 ----
 
-=== Run a non-interactive session with a single command
+===== Run a non-interactive session with a single command
 
 [source,shell]
 ----
-$ kubectl jboss-cli wildfly-s2i-d6f58b4b-vs4pt --command=':read-attribute\(name=product-version\)'
+$ kubectl jboss-cli pod wildfly-s2i-d6f58b4b-vs4pt --command=':read-attribute\(name=product-version\)'
 {
     "outcome" => "success",
     "result" => "25.0.1.Final"
 }
 ----
+
+=== Run commands on all WildFly servers belonging to an application
+
+[source,shell]
+----
+kubectl jboss-cli app <label selector> <jboss-cli parameters>
+----
+
+==== Examples
+
+===== Run a non-interactive session with a single command
+
+
+[source,shell]
+----
+$ kubectl get pods -l app.kubernetes.io/instance=wildfly-s2i
+NAME                         READY   STATUS    RESTARTS   AGE
+wildfly-s2i-d6f58b4b-njghw   1/1     Running   0          12m
+wildfly-s2i-d6f58b4b-vs4pt   1/1     Running   0          79m
+...
+----
+
+All the pods that belongs to the `wildlfy-s2i` application have the label `app.kubernetes.io/instance=wildfly-s2i`
+
+[source,shell]
+----
+$ kubectl jboss-cli app app.kubernetes.io/instance=wildfly-s2i --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
+Running command on pod/wildfly-s2i-d6f58b4b-njghw
+{
+    "outcome" => "success",
+    "result" => "wildfly-s2i-d6f58b4b-njghw"
+}
+{
+    "outcome" => "success",
+    "result" => "8353dbd6-a464-4931-aa57-14930f902268"
+}
+Running command on pod/wildfly-s2i-d6f58b4b-vs4pt
+{
+    "outcome" => "success",
+    "result" => "wildfly-s2i-d6f58b4b-vs4pt"
+}
+{
+    "outcome" => "success",
+    "result" => "52d844de-7932-46bd-b6ad-a33f0947279f"
+}
+----
+
+===== Change log levels on all pods
+
+$ kubectl jboss-cli app app.kubernetes.io/instance=wildfly-s2i \
+  --echo-command \
+  --commands="/subsystem=logging/console-handler=CONSOLE:write-attribute\(name=level,value=TRACE\),/subsystem=logging/root-logger=ROOT:write-attribute\(name=level,value=TRACE\)"

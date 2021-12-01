@@ -3,11 +3,12 @@
 help() {
   script_name=jboss-cli
 echo "
-$script_name is a Kubernetes plugin to connect to a WildFly server running in a pod and run an interactive jboss-cli session.
+$script_name is a Kubernetes plugin to connect to a WildFly server running in a pod and run a jboss-cli session.
 Usage:
-  $script_name <pod>
+  $script_name pod <pod> <jboss-cli parameters>
 Where the parameters are:
   * <pod> - Name of the pod running the application image
+  * <jboss-cli parameters> - Parameters passed to the jboss-cli session (including --command, --commands, etc.)
 "
 exit 1
 }
