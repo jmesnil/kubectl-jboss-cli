@@ -4,6 +4,10 @@
 This plugin connects to a WildFly server running inside a Kubernetes Pod and creates a jboss-cli session connected to the server.
 It can also connect to a server running inside a bootable jar.
 
+== Prerequisites
+
+* `kubectl` or `oc` is installed
+
 == Installation
 
 [source,shell]
