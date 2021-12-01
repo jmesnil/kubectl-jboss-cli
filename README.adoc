@@ -12,7 +12,7 @@ It can also connect to a server running inside a bootable jar.
 
 [source,shell]
 ----
-wget https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli
+curl -O -L https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli
 chmod u+x ./kubectl-jboss_cli
 export PATH=$PATH:.
 ----
