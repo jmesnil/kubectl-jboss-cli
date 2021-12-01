@@ -3,22 +3,63 @@
 help() {
   script_name=jboss-cli
 echo "
-$script_name is a Kubernetes plugin to connect to a WildFly server running in a pod and run a jboss-cli session.
+$script_name is a Kubernetes plugin to connect to WildFly servers running in pods and run jboss-cli sessions.
 Usage:
-  $script_name <pod> <jboss-cli parameters>
+
+  $script_name [-p <pod>] [-f file] [-- <jboss-cli parameters>]
+  $script_name [-l <pod selector label>] [-f file] [-- <jboss-cli parameters>]
+
 Where the parameters are:
   * <pod> - Name of the pod running the application image
+  * <pod selector label> - Labels to select all the pods belonging to the application
+  * <file> - A file containing CLI commands
   * <jboss-cli parameters> - Parameters passed to the jboss-cli session (including --command, --commands, etc.)
 "
 exit 1
 }
 
-POD=$1
 
-if [ "x$POD" == "x" ]; then
-help
+while getopts "l:p:f:" OPTION; do
+  case $OPTION in
+  l)
+      LABELS=$OPTARG
+      ;;
+  p)
+      POD=$OPTARG
+      ;;
+  f)
+      FILE=$OPTARG
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+CLI_ARGS=$@
+
+if [ "x$FILE" != "x" ]; then
+  REMOTE_FILE=/tmp/$(basename $FILE)
+  CLI_ARGS="$CLI_ARGS --file=$REMOTE_FILE"
 fi
 
-shift
+if [ "x$LABELS" == "x" ] && [ "x$POD" == "x" ]; then
+  help
+fi
 
-kubectl exec ${POD} -it -- sh -c "[ -e /opt/jboss/container/wildfly-bootable-jar/install-dir ] && JBOSS_HOME=\$( cat /opt/jboss/container/wildfly-bootable-jar/install-dir ); \$JBOSS_HOME/bin/jboss-cli.sh -c $@"
+if [ "x$LABELS" != "x" ] && [ "x$POD" != "x" ]; then
+  help
+fi
+
+if [ "x$LABELS" != "x" ]; then
+  PODS=$(kubectl get pods -o jsonpath={..metadata.name} -l $LABELS)
+else
+  PODS=$POD
+fi 
+
+for pod in $PODS
+do
+  echo "Running on $pod"
+  if [ "x$REMOTE_FILE" != "x" ]; then
+    kubectl cp $FILE $pod:$REMOTE_FILE
+  fi
+  kubectl exec -it ${pod} -- sh -c "[ -e /opt/jboss/container/wildfly-bootable-jar/install-dir ] && JBOSS_HOME=\$( cat /opt/jboss/container/wildfly-bootable-jar/install-dir ); \$JBOSS_HOME/bin/jboss-cli.sh -c $CLI_ARGS"
+done

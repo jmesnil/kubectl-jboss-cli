@@ -21,7 +21,7 @@ curl -sL https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/instal
 
 [source,shell]
 ----
-kubectl jboss-cli <pod name> <jboss-cli parameters>
+kubectl jboss-cli -p <pod name> <jboss-cli parameters>
 ----
 
 ==== Examples
@@ -37,7 +37,7 @@ my-app-77d65cb876-9p242               1/1     Running     0          38s
 my-app-77d65cb876-hhsv8               1/1     Running     0          56m
 ...
 
-$ kubectl jboss-cli my-app-77d65cb876-9p242
+$ kubectl jboss-cli -p my-app-77d65cb876-9p242
 [standalone@localhost:9990 /] ls
 core-service                               subsystem                                  namespaces=[]                              release-version=17.0.3.Final
 deployment                                 system-property                            organization=undefined                     running-mode=NORMAL
@@ -58,7 +58,7 @@ socket-binding-group                       name=my-app-77d65cb876-9p242         
 
 [source,shell]
 ----
-$ kubectl jboss-cli my-app-77d65cb876-9p242 --command=':read-attribute\(name=product-version\)'
+$ kubectl jboss-cli -p my-app-77d65cb876-9p242 -- --command=':read-attribute\(name=product-version\)'
 {
     "outcome" => "success",
     "result" => "25.0.1.Final"
@@ -69,7 +69,7 @@ $ kubectl jboss-cli my-app-77d65cb876-9p242 --command=':read-attribute\(name=pro
 
 [source,shell]
 ----
-kubectl jboss-cli app <label selector> <jboss-cli parameters>
+kubectl jboss-cli -l <label selector> -- <jboss-cli parameters>
 ----
 
 ==== Examples
@@ -89,7 +89,7 @@ All the pods that belong to the `my-app` application have the label `app.kuberne
 
 [source,shell]
 ----
-$ kubectl jboss-cli app app.kubernetes.io/instance=my-app --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
+$ kubectl jboss-cli -l app.kubernetes.io/instance=my-app -- --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
 Running on pod/my-app-77d65cb876-9p242
 {
     "outcome" => "success",
@@ -114,7 +114,7 @@ Running on pod/my-app-77d65cb876-hhsv8
 
 [source,shell]
 ----
-kubectl jboss-cli apply-script <labels> <script file>
+kubectl jboss-cli -l <labels> -f <script file>
 ----
 
 ==== Examples
@@ -127,5 +127,5 @@ $ cat change-log-level.cli
 /subsystem=logging/console-handler=CONSOLE:write-attribute(name=level,value=DEBUG)
 /subsystem=logging/root-logger=ROOT:write-attribute(name=level,value=DEBUG)
 
-$ kubectl jboss-cli apply-script app.kubernetes.io/instance=my-app ./change-log-level.cli
+$ kubectl jboss-cli -l app.kubernetes.io/instance=my-app -f ./change-log-level.cli
 ----
