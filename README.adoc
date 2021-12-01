@@ -21,7 +21,7 @@ export PATH=$PATH:.
 
 [source,shell]
 ----
-kubect jboss-cli <pod> <jboss-cli parameters>
+kubectl jboss-cli <pod> <jboss-cli parameters>
 ----
 
 == Examples
