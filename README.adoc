@@ -115,10 +115,22 @@ Running command on pod/wildfly-s2i-d6f58b4b-vs4pt
 }
 ----
 
-===== Change log levels on all pods
+=== Apply a script to all WildFly servers belonging to an application
 
 [source,shell]
 ----
-$ kubectl jboss-cli app app.kubernetes.io/instance=wildfly-s2i \
-  --commands="/subsystem=logging/console-handler=CONSOLE:write-attribute\(name=level,value=TRACE\),/subsystem=logging/root-logger=ROOT:write-attribute\(name=level,value=TRACE\)"
+kubectl jboss-cli apply-script <labels> <script file>
+----
+
+==== Examples
+
+===== Change the log level for the console output
+
+[source,shell]
+----
+$ cat change-log-level.cli
+/subsystem=logging/console-handler=CONSOLE:write-attribute(name=level,value=DEBUG)
+/subsystem=logging/root-logger=ROOT:write-attribute(name=level,value=DEBUG)
+
+$ kubectl jboss-cli apply-script app.kubernetes.io/instance=wildfly-s2i ./change-log-level.cli
 ----
