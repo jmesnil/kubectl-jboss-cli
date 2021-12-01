@@ -1,0 +1,61 @@
+= kubectl-jboss-cli - Kubernetes Plugin to run jboss-cli 
+:toc:               left
+
+This plugin connects to a WildFly server running inside a Kubernetes Pod and creates a jboss-cli session connected to the server.
+It can also connect to a server running inside a bootable jar.
+
+== Installation
+
+[source,shell]
+----
+wget https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli
+chmod u+x ./kubectl-jboss_cli
+export PATH=$PATH:.
+----
+
+== Usage
+
+[source,shell]
+----
+kubect jboss-cli <pod> <jboss-cli parameters>
+----
+
+== Examples
+
+=== Interactive session
+
+[source,shell]
+----
+$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+...
+wildfly-s2i-d6f58b4b-vs4pt   1/1     Running   0          36m
+...
+
+$ kubectl jboss-cli wildfly-s2i-d6f58b4b-vs4pt
+[standalone@localhost:9990 /] ls
+core-service                               subsystem                                  namespaces=[]                              release-version=17.0.3.Final
+deployment                                 system-property                            organization=undefined                     running-mode=NORMAL
+deployment-overlay                         launch-type=STANDALONE                     process-type=Server                        runtime-configuration-state=ok
+extension                                  management-major-version=18                product-name=WildFly Full                  schema-locations=[]
+interface                                  management-micro-version=0                 product-version=25.0.1.Final               server-state=running
+path                                       management-minor-version=0                 profile-name=undefined                     suspend-state=RUNNING
+socket-binding-group                       name=wildfly-s2i-d6f58b4b-vs4pt            release-codename=                          uuid=52d844de-7932-46bd-b6ad-a33f0947279f
+
+[standalone@localhost:9990 /] :read-attribute(name=product-version)
+{
+    "outcome" => "success",
+    "result" => "25.0.1.Final"
+}
+----
+
+=== Run a non-interactive session with a single command
+
+[source,shell]
+----
+$ kubectl jboss-cli wildfly-s2i-d6f58b4b-vs4pt --command=':read-attribute\(name=product-version\)'
+{
+    "outcome" => "success",
+    "result" => "25.0.1.Final"
+}
+----
