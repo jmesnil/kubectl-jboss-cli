@@ -117,6 +117,8 @@ Running command on pod/wildfly-s2i-d6f58b4b-vs4pt
 
 ===== Change log levels on all pods
 
+[source,shell]
+----
 $ kubectl jboss-cli app app.kubernetes.io/instance=wildfly-s2i \
-  --echo-command \
   --commands="/subsystem=logging/console-handler=CONSOLE:write-attribute\(name=level,value=TRACE\),/subsystem=logging/root-logger=ROOT:write-attribute\(name=level,value=TRACE\)"
+----
