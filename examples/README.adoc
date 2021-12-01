@@ -1,0 +1,13 @@
+# Change log levels on all servers belonging to an application
+
+[source,shell]
+----
+PODS=($(kubectl get pods -o jsonpath={..metadata.name} -l app.kubernetes.io/instance=wildfly-s2i))
+for pod in $PODS
+do
+  echo $pod
+  kubectl cp ./change-log-level.cli $pod:/tmp
+done
+
+kubectl jboss-cli app app.kubernetes.io/instance=wildfly-s2i --file=/tmp/change-log-level.cli
+----
