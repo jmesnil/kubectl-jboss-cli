@@ -37,11 +37,11 @@ kubectl jboss-cli pod <pod name> <jboss-cli parameters>
 $ kubectl get pods
 NAME                         READY   STATUS    RESTARTS   AGE
 ...
-wildfly-s2i-d6f58b4b-vs4pt   1/1     Running   0          36m
-wildfly-s2i-d6f58b4b-njghw   1/1     Running   0          9m55s
+my-app-77d65cb876-9p242               1/1     Running     0          38s
+my-app-77d65cb876-hhsv8               1/1     Running     0          56m
 ...
 
-$ kubectl jboss-cli pod wildfly-s2i-d6f58b4b-vs4pt
+$ kubectl jboss-cli pod my-app-77d65cb876-9p242
 [standalone@localhost:9990 /] ls
 core-service                               subsystem                                  namespaces=[]                              release-version=17.0.3.Final
 deployment                                 system-property                            organization=undefined                     running-mode=NORMAL
@@ -49,7 +49,7 @@ deployment-overlay                         launch-type=STANDALONE               
 extension                                  management-major-version=18                product-name=WildFly Full                  schema-locations=[]
 interface                                  management-micro-version=0                 product-version=25.0.1.Final               server-state=running
 path                                       management-minor-version=0                 profile-name=undefined                     suspend-state=RUNNING
-socket-binding-group                       name=wildfly-s2i-d6f58b4b-vs4pt            release-codename=                          uuid=52d844de-7932-46bd-b6ad-a33f0947279f
+socket-binding-group                       name=my-app-77d65cb876-9p242               release-codename=                          uuid=a2bbbb96-238c-4366-baaf-3cfebf16bc35
 
 [standalone@localhost:9990 /] :read-attribute(name=product-version)
 {
@@ -62,7 +62,7 @@ socket-binding-group                       name=wildfly-s2i-d6f58b4b-vs4pt      
 
 [source,shell]
 ----
-$ kubectl jboss-cli pod wildfly-s2i-d6f58b4b-vs4pt --command=':read-attribute\(name=product-version\)'
+$ kubectl jboss-cli pod my-app-77d65cb876-9p242 --command=':read-attribute\(name=product-version\)'
 {
     "outcome" => "success",
     "result" => "25.0.1.Final"
@@ -83,35 +83,34 @@ kubectl jboss-cli app <label selector> <jboss-cli parameters>
 
 [source,shell]
 ----
-$ kubectl get pods -l app.kubernetes.io/instance=wildfly-s2i
-NAME                         READY   STATUS    RESTARTS   AGE
-wildfly-s2i-d6f58b4b-njghw   1/1     Running   0          12m
-wildfly-s2i-d6f58b4b-vs4pt   1/1     Running   0          79m
-...
+$ kubectl get pods -l app.kubernetes.io/instance=my-app
+NAME                      READY   STATUS    RESTARTS   AGE
+my-app-77d65cb876-9p242   1/1     Running   0          3m12s
+my-app-77d65cb876-hhsv8   1/1     Running   0          59m
 ----
 
-All the pods that belongs to the `wildlfy-s2i` application have the label `app.kubernetes.io/instance=wildfly-s2i`
+All the pods that belong to the `my-app` application have the label `app.kubernetes.io/instance=my-app`
 
 [source,shell]
 ----
-$ kubectl jboss-cli app app.kubernetes.io/instance=wildfly-s2i --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
-Running command on pod/wildfly-s2i-d6f58b4b-njghw
+$ kubectl jboss-cli app app.kubernetes.io/instance=my-app --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
+Running on pod/my-app-77d65cb876-9p242
 {
     "outcome" => "success",
-    "result" => "wildfly-s2i-d6f58b4b-njghw"
+    "result" => "my-app-77d65cb876-9p242"
 }
 {
     "outcome" => "success",
-    "result" => "8353dbd6-a464-4931-aa57-14930f902268"
+    "result" => "a2bbbb96-238c-4366-baaf-3cfebf16bc35"
 }
-Running command on pod/wildfly-s2i-d6f58b4b-vs4pt
+Running on pod/my-app-77d65cb876-hhsv8
 {
     "outcome" => "success",
-    "result" => "wildfly-s2i-d6f58b4b-vs4pt"
+    "result" => "my-app-77d65cb876-hhsv8"
 }
 {
     "outcome" => "success",
-    "result" => "52d844de-7932-46bd-b6ad-a33f0947279f"
+    "result" => "b035c7e9-0898-4c15-9426-15a603b554f5"
 }
 ----
 
@@ -132,5 +131,5 @@ $ cat change-log-level.cli
 /subsystem=logging/console-handler=CONSOLE:write-attribute(name=level,value=DEBUG)
 /subsystem=logging/root-logger=ROOT:write-attribute(name=level,value=DEBUG)
 
-$ kubectl jboss-cli apply-script app.kubernetes.io/instance=wildfly-s2i ./change-log-level.cli
+$ kubectl jboss-cli apply-script app.kubernetes.io/instance=my-app ./change-log-level.cli
 ----
