@@ -12,10 +12,10 @@ It can also connect to a server running inside a bootable jar.
 
 [source,shell]
 ----
-curl -O -L https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-pod
-chmod u+x ./kubectl-jboss_cli-pod
-curl -O -L https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-app
-chmod u+x ./kubectl-jboss_cli-app
+curl -O -sL https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-pod
+curl -O -sL https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-app
+curl -O -sL https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/kubectl-jboss_cli-apply_script
+chmod u+x ./kubectl-jboss_cli-*
 export PATH=$PATH:.
 ----
 
