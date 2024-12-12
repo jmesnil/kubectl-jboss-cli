@@ -17,53 +17,98 @@ curl -sL https://raw.githubusercontent.com/jmesnil/kubectl-jboss-cli/main/instal
 
 == Usage
 
+[source,shell]
+----
+$ kubectl jboss-cli -h
+
+jboss-cli is a Kubernetes plugin to connect to WildFly servers running in pods and run jboss-cli sessions.
+
+Usage:
+
+  jboss-cli [-h]
+     - Displays this help
+  jboss-cli [-p <pod>] [-f file] [-- <jboss-cli parameters>]
+     - Connects to a single pod
+  jboss-cli [-l <pod selector label>] [-f file] [-- <jboss-cli parameters>]
+      - Connects to multiple pods matching the label
+
+Where the parameters are:
+  * <pod> - Name of the pod running the application image
+  * <pod selector label> - Labels to select all the pods belonging to the application
+  * <file> - A file containing CLI commands
+  * <jboss-cli parameters> - Parameters passed to the jboss-cli session (including --command, --commands, etc.)
+----
+
+== Examples
+
+=== Prerequisites
+
+You need to be logged in to a Kubernetes cluster that is up and running (for example with `minikube`).
+
+Let's create a `my-app` deployment with 3 replicas and the label `app=my-app`:
+
+[source,shell]
+----
+kubectl create deployment my-app --replicas=3 --image=quay.io/wildfly/wildfly
+----
+
+The deployment is composed of 3 pods:
+
+[source,shell]
+----
+$ kubectl get deployment my-app
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+my-app   3/3     3            3           66s
+$ kubectl get pods
+NAME                      READY   STATUS    RESTARTS   AGE
+my-app-84b45f6b74-6xldb   1/1     Running   0          69s
+my-app-84b45f6b74-ct8g4   1/1     Running   0          69s
+my-app-84b45f6b74-m824q   1/1     Running   0          69s
+----
+
 === Run commands on a single WildFly server
 
 [source,shell]
 ----
-kubectl jboss-cli -p <pod name> <jboss-cli parameters>
+kubectl jboss-cli -p <pod name> -- <jboss-cli parameters>
 ----
 
-==== Examples
-
-===== Interactive session
+==== Interactive session
 
 [source,shell]
 ----
-$ kubectl get pods
-NAME                         READY   STATUS    RESTARTS   AGE
-...
-my-app-77d65cb876-9p242               1/1     Running     0          38s
-my-app-77d65cb876-hhsv8               1/1     Running     0          56m
-...
-
-$ kubectl jboss-cli -p my-app-77d65cb876-9p242
+$ kubectl jboss-cli -p my-app-84b45f6b74-6xldb
+Running on my-app-84b45f6b74-6xldb
 [standalone@localhost:9990 /] ls
-core-service                               subsystem                                  namespaces=[]                              release-version=17.0.3.Final
-deployment                                 system-property                            organization=undefined                     running-mode=NORMAL
-deployment-overlay                         launch-type=STANDALONE                     process-type=Server                        runtime-configuration-state=ok
-extension                                  management-major-version=18                product-name=WildFly Full                  schema-locations=[]
-interface                                  management-micro-version=0                 product-version=25.0.1.Final               server-state=running
-path                                       management-minor-version=0                 profile-name=undefined                     suspend-state=RUNNING
-socket-binding-group                       name=my-app-77d65cb876-9p242               release-codename=                          uuid=a2bbbb96-238c-4366-baaf-3cfebf16bc35
-
+core-service                               socket-binding-group                       management-minor-version=0                 product-version=34.0.1.Final               schema-locations=[]
+deployment                                 subsystem                                  name=my-app-84b45f6b74-6xldb               profile-name=undefined                     server-state=running
+deployment-overlay                         system-property                            namespaces=[]                              release-codename=                          suspend-state=RUNNING
+extension                                  launch-type=STANDALONE                     organization=undefined                     release-version=26.0.1.Final               uuid=5a1bcc3b-ffb1-4c32-9c96-ce47173b0441
+interface                                  management-major-version=27                process-type=Server                        running-mode=NORMAL
+path                                       management-micro-version=0                 product-name=WildFly                       runtime-configuration-state=ok
 [standalone@localhost:9990 /] :read-attribute(name=product-version)
 {
     "outcome" => "success",
-    "result" => "25.0.1.Final"
+    "result" => "34.0.1.Final"
 }
 ----
 
-===== Run a non-interactive session with a single command
+==== Non-interactive session
 
 [source,shell]
 ----
-$ kubectl jboss-cli -p my-app-77d65cb876-9p242 -- --command=':read-attribute\(name=product-version\)'
+kubectl jboss-cli -pmy-app-84b45f6b74-6xldb -- --command=":read-attribute\(name=product-version\)"
+Running on my-app-84b45f6b74-6xldb
 {
     "outcome" => "success",
-    "result" => "25.0.1.Final"
+    "result" => "34.0.1.Final"
 }
 ----
+
+[NOTE]
+=====
+The parentheses in the CLI commands must be escaped with `\` when the session is non-interactive.
+=====
 
 === Run commands on all WildFly servers belonging to an application
 
@@ -72,41 +117,39 @@ $ kubectl jboss-cli -p my-app-77d65cb876-9p242 -- --command=':read-attribute\(na
 kubectl jboss-cli -l <label selector> -- <jboss-cli parameters>
 ----
 
-==== Examples
+==== Non-interactive session
 
-===== Run a non-interactive session with a single command
-
-
-[source,shell]
-----
-$ kubectl get pods -l app.kubernetes.io/instance=my-app
-NAME                      READY   STATUS    RESTARTS   AGE
-my-app-77d65cb876-9p242   1/1     Running   0          3m12s
-my-app-77d65cb876-hhsv8   1/1     Running   0          59m
-----
-
-All the pods that belong to the `my-app` application have the label `app.kubernetes.io/instance=my-app`
+All the pods that belong to the `my-app` deployment have the label `app=my-app`.
 
 [source,shell]
 ----
-$ kubectl jboss-cli -l app.kubernetes.io/instance=my-app -- --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
-Running on pod/my-app-77d65cb876-9p242
+$ kubectl jboss-cli -l app=my-app -- --commands=":read-attribute\(name=name\),:read-attribute\(name=uuid\)"
+Running on my-app-84b45f6b74-6xldb
 {
     "outcome" => "success",
-    "result" => "my-app-77d65cb876-9p242"
+    "result" => "my-app-84b45f6b74-6xldb"
 }
 {
     "outcome" => "success",
-    "result" => "a2bbbb96-238c-4366-baaf-3cfebf16bc35"
+    "result" => "5a1bcc3b-ffb1-4c32-9c96-ce47173b0441"
 }
-Running on pod/my-app-77d65cb876-hhsv8
+Running on my-app-84b45f6b74-ct8g4
 {
     "outcome" => "success",
-    "result" => "my-app-77d65cb876-hhsv8"
+    "result" => "my-app-84b45f6b74-ct8g4"
 }
 {
     "outcome" => "success",
-    "result" => "b035c7e9-0898-4c15-9426-15a603b554f5"
+    "result" => "1110f54f-5762-4ce6-91fd-b45601cbd0bd"
+}
+Running on my-app-84b45f6b74-m824q
+{
+    "outcome" => "success",
+    "result" => "my-app-84b45f6b74-m824q"
+}
+{
+    "outcome" => "success",
+    "result" => "527761ea-a529-42d9-b4b6-b354f2748229"
 }
 ----
 
@@ -117,9 +160,7 @@ Running on pod/my-app-77d65cb876-hhsv8
 kubectl jboss-cli -l <labels> -f <script file>
 ----
 
-==== Examples
-
-===== Change the log level for the console output
+==== Change the log level for the console output
 
 [source,shell]
 ----
@@ -127,5 +168,14 @@ $ cat change-log-level.cli
 /subsystem=logging/console-handler=CONSOLE:write-attribute(name=level,value=DEBUG)
 /subsystem=logging/root-logger=ROOT:write-attribute(name=level,value=DEBUG)
 
-$ kubectl jboss-cli -l app.kubernetes.io/instance=my-app -f ./change-log-level.cli
+$ kubectl jboss-cli -l app=my-app -f ./change-log-level.cli
+Running on my-app-84b45f6b74-6xldb
+{"outcome" => "success"}
+{"outcome" => "success"}
+Running on my-app-84b45f6b74-ct8g4
+{"outcome" => "success"}
+{"outcome" => "success"}
+Running on my-app-84b45f6b74-m824q
+{"outcome" => "success"}
+{"outcome" => "success"}
 ----

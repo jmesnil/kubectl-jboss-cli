@@ -4,10 +4,15 @@ help() {
   script_name=jboss-cli
 echo "
 $script_name is a Kubernetes plugin to connect to WildFly servers running in pods and run jboss-cli sessions.
+
 Usage:
 
+  $script_name [-h]
+     - Displays this help
   $script_name [-p <pod>] [-f file] [-- <jboss-cli parameters>]
+     - Connects to a single pod
   $script_name [-l <pod selector label>] [-f file] [-- <jboss-cli parameters>]
+     - Connects to multiple pods matching the label
 
 Where the parameters are:
   * <pod> - Name of the pod running the application image
@@ -19,8 +24,12 @@ exit 1
 }
 
 
-while getopts "l:p:f:" OPTION; do
+while getopts "hl:p:f:" OPTION; do
   case $OPTION in
+  h)
+      help
+      exit 1
+      ;;
   l)
       LABELS=$OPTARG
       ;;
@@ -51,6 +60,10 @@ fi
 
 if [ "x$LABELS" != "x" ]; then
   PODS=$(kubectl get pods -o jsonpath={..metadata.name} -l $LABELS)
+  if [ "x$PODS" = "x" ]; then
+    echo "No pods found matching label $LABELS"
+    exit 1
+  fi
 else
   PODS=$POD
 fi 
