@@ -1,3 +1,0 @@
-/subsystem=logging/console-handler=CONSOLE:write-attribute(name=level,value=DEBUG)
-/subsystem=logging/root-logger=ROOT:write-attribute(name=level,value=DEBUG)
-:reload

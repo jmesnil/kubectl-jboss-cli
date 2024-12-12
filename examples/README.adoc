@@ -1,6 +1,0 @@
-# Change log levels on all servers belonging to an application
-
-[source,shell]
-----
-kubectl jboss-cli apply-script app.kubernetes.io/instance=wildfly-s2i examples/change-log-level.cli
-----
