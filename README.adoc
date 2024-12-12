@@ -1,4 +1,4 @@
-= kubectl-jboss-cli - Kubernetes Plugin to run jboss-cli 
+= kubectl-jboss-cli - a kubectl plugin to run WildFly management operations on Kubernetes
 :toc:               left
 
 This plugin connects to a WildFly server running inside a Kubernetes Pod and creates a jboss-cli session connected to the server.
